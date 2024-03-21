@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Содание нового курса{% endblock %}
+
+{% block body %}
+    <h1>Содание нового курса</h1>
+
+    {{ include('course/_form.html.twig') }}
+
+    <hr>
+    
+    <a href="{{ path('app_course_index') }}">К списку курсов</a>
+{% endblock %}

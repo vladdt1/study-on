@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ course.name }}{% endblock %}
+
+{% block body %}
+    <h1>{{ course.name }}</h1>
+    <p>{{ course.description }}</p>
+    
+    <h3>Уроки</h3>
+
+    <ol>
+        {% for lesson in course.lessons|sort((a, b) => a.number <=> b.number) %}
+            <li>
+                <a href="{{ path('app_lesson_show', { 'id' : lesson.id }) }}">
+                    {{ lesson.name }}
+                </a>
+            </li>
+        {% endfor %}
+    </ol>
+
+    <hr>
+
+    <a href="{{ path('app_course_index') }}">К списку курсов</a>
+
+    <a href="{{ path('app_course_edit', {'id': course.id}) }}">Редактировать крус</a>
+
+    <a href="{{ path('app_lesson_new', {'id': course.id}) }}">Добавить урок</a>
+
+{% endblock %}
