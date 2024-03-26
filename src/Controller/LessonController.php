@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Course;
 use App\Entity\Lesson;
 use App\Form\LessonType;
 use App\Repository\LessonRepository;
@@ -29,28 +30,6 @@ class LessonController extends AbstractController
         ]);
     }
 
-    #[Route('/new', name: 'app_lesson_new', methods: ['GET', 'POST'])]
-    public function new(Request $request): Response
-    {
-        $lesson = new Lesson();
-        $form = $this->createForm(LessonType::class, $lesson);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->entityManager->persist($lesson);
-            $this->entityManager->flush();
-
-            $this->addFlash('success', 'Урок успешно создан.');
-
-            return $this->redirectToRoute('app_lesson_index');
-        }
-
-        return $this->render('lesson/new.html.twig', [
-            'lesson' => $lesson,
-            'form' => $form,
-        ]);
-    }
-
     #[Route('/{id}', name: 'app_lesson_show', methods: ['GET'])]
     public function show(Lesson $lesson): Response
     {
@@ -70,7 +49,10 @@ class LessonController extends AbstractController
 
             $this->addFlash('success', 'Изменения урока сохранены.');
 
-            return $this->redirectToRoute('app_lesson_index');
+            return $this->redirectToRoute(
+                'app_course_show', ['id' => $lesson->getCourse()->getId()],
+                Response::HTTP_SEE_OTHER
+            );
         }
 
         return $this->render('lesson/edit.html.twig', [
@@ -80,8 +62,17 @@ class LessonController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_lesson_delete', methods: ['POST'])]
-    public function delete(Request $request, Lesson $lesson): Response
+    public function delete(Request $request, int $id): Response
     {
+        $lesson = $this->entityManager->getRepository(Lesson::class)->find($id);
+
+        if (!$lesson) {
+            $this->addFlash('error', 'Урок не найден.');
+            return $this->redirectToRoute('app_lesson_index');
+        }
+
+        $courseId = $lesson->getCourse()->getId();
+
         if ($this->isCsrfTokenValid('delete'.$lesson->getId(), $request->request->get('_token'))) {
             $this->entityManager->remove($lesson);
             $this->entityManager->flush();
@@ -91,6 +82,10 @@ class LessonController extends AbstractController
             $this->addFlash('error', 'Неверный CSRF токен.');
         }
 
-        return $this->redirectToRoute('app_lesson_index');
+        return $this->redirectToRoute(
+            'app_course_show', ['id' => $courseId],
+            Response::HTTP_SEE_OTHER
+        );
     }
+
 }

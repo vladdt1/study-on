@@ -3,8 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\Course;
+use App\Entity\Lesson;
 use App\Form\CourseType;
+use App\Form\LessonType;
 use App\Repository\CourseRepository;
+use App\Repository\LessonRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -92,5 +95,31 @@ class CourseController extends AbstractController
         }
 
         return $this->redirectToRoute('app_course_index');
+    }
+
+    #[Route('{id}/new/lesson', name: 'app_lesson_new', methods: ['GET', 'POST'])]
+    public function newLesson(Request $request, Course $course, LessonRepository $lessonRepository): Response
+    {
+        $lesson = new Lesson();
+        $lesson->setCourse($course);
+        $form = $this->createForm(LessonType::class, $lesson, [
+            'course' => $course,
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $lessonRepository->save($lesson, true);
+
+            return $this->redirectToRoute(
+                'app_course_show', ['id' => $course->getId()],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        return $this->render('lesson/new.html.twig', [
+            'lesson' => $lesson,
+            'form' => $form,
+            'course' => $course,
+        ]);
     }
 }
