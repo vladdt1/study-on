@@ -32,12 +32,24 @@ class LessonType extends AbstractType
                 'constraints' => [
                     new NotBlank(message: 'Название не может быть пустым'),
                     new Length(max: 255, maxMessage: 'Название урока должно быть не более 255 символов'),
+                ],
+                'attr' => [
+                    'class' => 'form-control',
+                ],
+                'label_attr' => [
+                    'class' => 'p-1',
                 ]
             ])
             ->add('content', TextareaType::class, [
                 'label' => 'Содержимое урока',
                 'constraints' => [
                     new NotBlank(message: 'Содержимое урока не может быть пустым'),
+                ],
+                'attr' => [
+                    'class' => 'form-control',
+                ],
+                'label_attr' => [
+                    'class' => 'p-1',
                 ]
             ])
             ->add('number', NumberType::class, [
@@ -49,6 +61,12 @@ class LessonType extends AbstractType
                         min: 1,
                         max: 10000,
                     ),
+                ],
+                'attr' => [
+                    'class' => 'form-control',
+                ],
+                'label_attr' => [
+                    'class' => 'p-1',
                 ]
             ])
             ->add('course', HiddenType::class)

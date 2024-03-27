@@ -73,7 +73,10 @@ class CourseController extends AbstractController
 
             $this->addFlash('success', 'Изменения курса сохранены.');
 
-            return $this->redirectToRoute('app_course_index');
+            return $this->redirectToRoute(
+                'app_course_show', ['id' => $course->getId()],
+                Response::HTTP_SEE_OTHER
+            );
         }
 
         return $this->render('course/edit.html.twig', [

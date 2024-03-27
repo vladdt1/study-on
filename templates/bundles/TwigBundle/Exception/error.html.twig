@@ -1,0 +1,10 @@
+{# templates/bundles/TwigBundle/Exception/error.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Ошибка на стороне сервера</h1>
+
+    <h5>
+        Перейдите на <a href="{{ path('app_course_index') }}">главную страницу</a>.
+    </h5>
+{% endblock %}

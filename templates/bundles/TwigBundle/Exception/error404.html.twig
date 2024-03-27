@@ -1,0 +1,11 @@
+{# templates/bundles/TwigBundle/Exception/error404.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Страница не найдена</h1>
+
+    <p>
+        Запрошенная страница не может быть найдена. Проверьте, нет ли
+        ошибок в написании URL-адреса или вернитесь на <a href="{{ path('app_course_index') }}">главную страницу</a>.
+    </p>
+{% endblock %}

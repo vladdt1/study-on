@@ -21,6 +21,12 @@ class CourseType extends AbstractType
                 'constraints' => [
                     new NotBlank(message: 'Символьный код не может быть пустым'),
                     new Length(max: 255, maxMessage: 'Символьный код должен быть не более 255 символов')
+                ],
+                'attr' => [
+                    'class' => 'form-control',
+                ],
+                'label_attr' => [
+                    'class' => 'p-1',
                 ]
             ])
             ->add('name', TextType::class, [
@@ -28,6 +34,12 @@ class CourseType extends AbstractType
                 'constraints' => [
                     new NotBlank(['message' => 'Название не может быть пустым']),
                     new Length(['max' => 55, 'maxMessage' => 'Название должно быть не более 55 символов'])
+                ],
+                'attr' => [
+                    'class' => 'form-control',
+                ],
+                'label_attr' => [
+                    'class' => 'p-1',
                 ]
             ])
             ->add('description', TextType::class, [
@@ -35,6 +47,12 @@ class CourseType extends AbstractType
                 'constraints' => [
                     new NotBlank(['message' => 'Описание не может быть пустым']),
                     new Length(['max' => 255, 'maxMessage' => 'Описание должно быть не более 255 символов'])
+                ],
+                'attr' => [
+                    'class' => 'form-control',
+                ],
+                'label_attr' => [
+                    'class' => 'p-1',
                 ]
             ])
         ;
