@@ -20,7 +20,10 @@ migrate:
 
 fixtload:
 	@${CONSOLE} doctrine:fixtures:load
-	
+
+phpunit:
+	@${PHP} vendor/bin/phpunit
+
 encore_dev:
 	@${COMPOSE} run node yarn encore dev
 

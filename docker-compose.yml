@@ -4,6 +4,7 @@ volumes:
 services:
   nginx:
     image: nginx:alpine
+    container_name: study-on.local
     working_dir: /app
     volumes:
       - ${PROJECT_DIR}:/app
