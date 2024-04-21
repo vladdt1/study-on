@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\Tests\AbstractTest;
+use App\Tests\Mock\BillingClientMock;
 use App\Entity\Course;
 use Doctrine\ORM\EntityManagerInterface;
 use App\DataFixtures\AppFixtures;
@@ -20,6 +21,25 @@ class CourseTest extends AbstractTest
     public function testSomething(): void
     {
         $client = AbstractTest::createTestClient();
+        $client->disableReboot();
+
+        // Подменяем реальный сервис биллинга на мок
+        $client->getContainer()->set(
+            BillingClient::class, 
+            new BillingClientMock()
+        ); 
+
+        $crawler = $client->request('GET', '/login');
+        $form = $crawler->selectButton('Войти')->form([
+            'email' => 'new@example.com',
+            'password' => '123456'
+        ]);
+
+        $client->submit($form);
+
+        // Проверяем редирект на страницу профиля или курсов
+        $this->assertResponseRedirects('/courses/');
+
         $url = '/courses/';
 
         $crawler = $client->request('GET', $url);
@@ -43,7 +63,26 @@ class CourseTest extends AbstractTest
 
     public function testSearchCourse(): void
     {
-        $client = static::createTestClient();
+        $client = AbstractTest::createTestClient();
+        $client->disableReboot();
+
+        // Подменяем реальный сервис биллинга на мок
+        $client->getContainer()->set(
+            BillingClient::class, 
+            new BillingClientMock()
+        ); 
+
+        $crawler = $client->request('GET', '/login');
+        $form = $crawler->selectButton('Войти')->form([
+            'email' => 'admin@gmail.com',
+            'password' => 'password'
+        ]);
+
+        $client->submit($form);
+
+        // Проверяем редирект на страницу профиля или курсов
+        $this->assertResponseRedirects('/courses/');
+        
         $crawler = $client->request('GET', '/courses/');
 
         // Находим ссылку на курс по названию
@@ -60,6 +99,25 @@ class CourseTest extends AbstractTest
     public function testEditCourse(): void
     {
         $client = AbstractTest::createTestClient();
+        $client->disableReboot();
+
+        // Подменяем реальный сервис биллинга на мок
+        $client->getContainer()->set(
+            BillingClient::class, 
+            new BillingClientMock()
+        ); 
+
+        $crawler = $client->request('GET', '/login');
+        $form = $crawler->selectButton('Войти')->form([
+            'email' => 'admin@gmail.com',
+            'password' => 'password'
+        ]);
+
+        $client->submit($form);
+
+        // Проверяем редирект на страницу профиля или курсов
+        $this->assertResponseRedirects('/courses/');
+
         $crawler = $client->request('GET', '/courses/');
 
         // Находим ссылку на курс по названию
@@ -89,6 +147,25 @@ class CourseTest extends AbstractTest
     public function testEditLesson(): void
     {
         $client = AbstractTest::createTestClient();
+        $client->disableReboot();
+
+        // Подменяем реальный сервис биллинга на мок
+        $client->getContainer()->set(
+            BillingClient::class, 
+            new BillingClientMock()
+        ); 
+
+        $crawler = $client->request('GET', '/login');
+        $form = $crawler->selectButton('Войти')->form([
+            'email' => 'admin@gmail.com',
+            'password' => 'password'
+        ]);
+
+        $client->submit($form);
+
+        // Проверяем редирект на страницу профиля или курсов
+        $this->assertResponseRedirects('/courses/');
+        
         $crawler = $client->request('GET', '/courses/');
 
         // Находим ссылку на курс по названию
@@ -125,16 +202,34 @@ class CourseTest extends AbstractTest
     {
         $client = static::createTestClient();
 
-        $client->request('GET', '/courses/9999');
+        $client->request('GET', '/courses/99999');
         $this->assertResponseStatusCodeSame(404);
 
-        $client->request('GET', '/lessons/9999');
+        $client->request('GET', '/lessons/99999');
         $this->assertResponseStatusCodeSame(404);
     }
 
     public function testCreateAndDeleteCourse(): void
     {
-        $client = static::createTestClient();
+        $client = AbstractTest::createTestClient();
+        $client->disableReboot();
+
+        // Подменяем реальный сервис биллинга на мок
+        $client->getContainer()->set(
+            BillingClient::class, 
+            new BillingClientMock()
+        ); 
+
+        $crawler = $client->request('GET', '/login');
+        $form = $crawler->selectButton('Войти')->form([
+            'email' => 'admin@gmail.com',
+            'password' => 'password'
+        ]);
+
+        $client->submit($form);
+
+        // Проверяем редирект на страницу профиля или курсов
+        $this->assertResponseRedirects('/courses/');
 
         // Шаг 1: Создание курса
         $crawler = $client->request('GET', '/courses/new');

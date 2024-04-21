@@ -10,6 +10,8 @@ use App\Repository\CourseRepository;
 use App\Repository\LessonRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -35,6 +37,9 @@ class CourseController extends AbstractController
     #[Route('/new', name: 'app_course_new', methods: ['GET', 'POST'])]
     public function new(Request $request): Response
     {
+        if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw new AccessDeniedHttpException();
+        }
         $course = new Course();
         $form = $this->createForm(CourseType::class, $course);
         $form->handleRequest($request);
@@ -65,6 +70,9 @@ class CourseController extends AbstractController
     #[Route('/{id}/edit', name: 'app_course_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Course $course): Response
     {
+        if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw new AccessDeniedException('Доступ запрещен.');
+        }
         $form = $this->createForm(CourseType::class, $course);
         $form->handleRequest($request);
 

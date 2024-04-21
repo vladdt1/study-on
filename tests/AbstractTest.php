@@ -29,7 +29,7 @@ abstract class AbstractTest extends WebTestCase
     protected function setUp(): void
     {
         parent::setUp(); // Это обеспечит корректную инициализацию окружения тестирования
-        self::$client = static::createTestClient(); // Используйте здесь ваш метод создания клиента
+        self::$client = static::createTestClient();
         $this->loadFixtures($this->getFixtures());
     }
 

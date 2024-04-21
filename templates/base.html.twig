@@ -18,10 +18,33 @@
 	</head>
 	<body>
 		<nav class="navbar navbar-expand-lg navbar-light bg-light p-3 rounded-2">
-			<div class="container-fluid">
-				<a class="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fs-3" href="{{ path('app_course_index') }}">
-					StudyOn
-				</a>
+			<div class="container">
+				<div class="container-fluid">
+					<a class="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fs-3" 
+					href="{{ path('app_course_index') }}"
+					>
+						StudyOn
+					</a>
+				</div>
+				<div class="collapse navbar-collapse">
+					<ul class="navbar-nav ml-auto">
+						{% if is_granted('IS_AUTHENTICATED_REMEMBERED') %}
+							<li class="nav-item">
+								<a class="nav-link" href="{{ path('app_profile') }}">Профиль</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" href="{{ path('app_logout') }}">Выйти</a>
+							</li>
+						{% else %}
+							<li class="nav-item">
+								<a class="nav-link" href="{{ path('app_login') }}">Войти</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" href="{{ path('app_register') }}">Регистрация</a>
+							</li>
+						{% endif %}
+					</ul>
+				</div>
 			</div>
 		</nav>
 		{% block body %}{% endblock %}

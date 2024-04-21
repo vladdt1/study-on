@@ -11,6 +11,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use App\Security\User;
 
 #[Route('/lessons')]
 class LessonController extends AbstractController
@@ -25,6 +28,9 @@ class LessonController extends AbstractController
     #[Route('/', name: 'app_lesson_index', methods: ['GET'])]
     public function index(LessonRepository $lessonRepository): Response
     {
+        if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw new AccessDeniedHttpException();
+        }
         return $this->render('lesson/index.html.twig', [
             'lessons' => $lessonRepository->findAll(),
         ]);
@@ -33,6 +39,9 @@ class LessonController extends AbstractController
     #[Route('/{id}', name: 'app_lesson_show', methods: ['GET'])]
     public function show(Lesson $lesson): Response
     {
+        if (!$this->getUser()) {
+            return $this->AccessDeniedHttpException();
+        }
         return $this->render('lesson/show.html.twig', [
             'lesson' => $lesson,
         ]);
@@ -41,6 +50,9 @@ class LessonController extends AbstractController
     #[Route('/{id}/edit', name: 'app_lesson_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Lesson $lesson): Response
     {
+        if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw new AccessDeniedException('Доступ запрещен.');
+        }
         $form = $this->createForm(LessonType::class, $lesson);
         $form->handleRequest($request);
 
@@ -64,6 +76,9 @@ class LessonController extends AbstractController
     #[Route('/{id}', name: 'app_lesson_delete', methods: ['POST'])]
     public function delete(Request $request, int $id): Response
     {
+        if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw new AccessDeniedException('Доступ запрещен.');
+        }
         $lesson = $this->entityManager->getRepository(Lesson::class)->find($id);
 
         if (!$lesson) {

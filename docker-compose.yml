@@ -43,3 +43,7 @@ services:
     volumes:
       - ${PROJECT_DIR}:/app
       - ${COMPOSER_HOME}/.yarn:/yarn
+networks:
+  default:
+    name: study-onbilling_default
+    external: true

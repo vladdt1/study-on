@@ -19,11 +19,13 @@
                 </div>
             {% else %}
                 <div>
-                    <p>no records found</p>
+                    <p>Курсы отсутствуют</p>
                 </div>
             {% endfor %}
         </div>
     </div>
     <hr>
-    <a class="btn btn-outline-primary" href="{{ path('app_course_new') }}">Создать новый курс</a>
+    {% if is_granted('ROLE_SUPER_ADMIN') %}
+        <a class="btn btn-outline-primary" href="{{ path('app_course_new') }}">Создать новый курс</a>
+    {% endif %}
 {% endblock %}
