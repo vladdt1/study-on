@@ -47,4 +47,96 @@ class BillingClient
         }
     }
 
+    public function current(string $token): array
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->billingUrl . '/api/v1/users/current', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                ],
+            ]);
+            return $response->toArray();
+        } catch (\Exception $e) {
+            throw new BillingUnavailableException('Ошибка получения информации о пользователе. ' . $e->getMessage());
+        }
+    }
+
+    public function register(string $email, string $password): array
+    {
+        try {
+            $response = $this->httpClient->request('POST', $this->billingUrl . '/api/v1/register', [
+                'json' => [
+                    'email' => $email,
+                    'password' => $password,
+                ],
+            ]);
+            return $response->toArray();
+            
+        } catch (\Exception $e) {
+            throw new BillingUnavailableException('Сервис временно недоступен. Попробуйте зарегистрироваться позднее.');
+        }
+    }
+
+    public function refreshToken(string $refreshToken): array
+    {
+        try {
+            $response = $this->httpClient->request('POST', $this->billingUrl . '/api/v1/token/refresh', [
+                'json' => [
+                    'refresh_token' => $refreshToken,
+                ],
+            ]);
+            return $response->toArray();
+        } catch (\Exception $e) {
+            throw new BillingUnavailableException('Ошибка обновления токена. ' . $e->getMessage());
+        }
+    }
+
+    public function getCourses(): array
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->billingUrl . '/api/v1/courses');
+            return $response->toArray();
+        } catch (\Exception $e) {
+            throw new BillingUnavailableException('Ошибка при получении списка курсов. ' . $e->getMessage());
+        }
+    }
+
+    public function getCourse(string $code): array
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->billingUrl . "/api/v1/courses/$code");
+            return $response->toArray();
+        } catch (\Exception $e) {
+            throw new BillingUnavailableException('Ошибка при получении информации о курсе. ' . $e->getMessage());
+        }
+    }
+
+    public function payForCourse(string $token, string $courseCode): array
+    {
+        try {
+            $response = $this->httpClient->request('POST', $this->billingUrl . "/api/v1/courses/$courseCode/pay", [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                ],
+            ]);
+            return $response->toArray();
+        } catch (\Exception $e) {
+            throw new BillingUnavailableException('Ошибка при оплате курса. ' . $e->getMessage());
+        }
+    }
+
+    public function getTransactions(string $token, array $filters = []): array
+    {
+        try {
+            $response = $this->httpClient->request('GET', $this->billingUrl . '/api/v1/transactions', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                ],
+                'query' => $filters,
+            ]);
+            return $response->toArray();
+        } catch (\Exception $e) {
+            throw new BillingUnavailableException('Ошибка при получении истории транзакций. ' . $e->getMessage());
+        }
+    }
 }

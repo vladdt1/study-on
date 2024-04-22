@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use App\Service\BillingClient;  
+use App\Security\BillingAuthenticator;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Security\User;
@@ -11,10 +13,13 @@ use App\Security\User;
 class ProfileController extends AbstractController
 {
     private $httpClient;
+    private $billingClient;
 
-    public function __construct(HttpClientInterface $httpClient)
+    public function __construct(HttpClientInterface $httpClient, BillingClient $billingClient)
     {
         $this->httpClient = $httpClient;
+        $this->billingClient = $billingClient;
+        
     }
 
     #[Route('/profile', name: 'app_profile')]
@@ -22,19 +27,13 @@ class ProfileController extends AbstractController
     {
         $user = $this->getUser();
     
-    if (!$user instanceof User) {
-        throw new \LogicException('Пользовательский объект не является экземпляром App\Security\User.');
-    }
+        if (!$user instanceof User) {
+            throw new \LogicException('Пользователь не найден.');
+        }
 
-    $apiToken = $user->getApiToken(); 
+        $apiToken = $user->getApiToken(); 
 
-        $response = $this->httpClient->request('GET', 'http://billing.study-on.local/api/v1/users/current', [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $apiToken,
-            ],
-        ]);
-
-        $data = $response->toArray(); 
+        $data = $this->billingClient->current($apiToken);
         $balance = $data['balance'] ?? 0;
 
         return $this->render('profile/profile.html.twig', [
