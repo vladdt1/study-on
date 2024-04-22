@@ -39,8 +39,10 @@ class LessonController extends AbstractController
     #[Route('/{id}', name: 'app_lesson_show', methods: ['GET'])]
     public function show(Lesson $lesson): Response
     {
+        // Проверяем, авторизован ли уже пользователь
         if (!$this->getUser()) {
-            return $this->AccessDeniedHttpException();
+            // Если пользователь не авторизован, перенаправляем его на страницу авторизации
+            return $this->redirectToRoute('app_login');
         }
         return $this->render('lesson/show.html.twig', [
             'lesson' => $lesson,

@@ -13,26 +13,26 @@ class AppFixtures extends Fixture
     {
         $coursesData = [
             [
-                'code' => 'CODE1',
+                'code' => 'code1',
                 'name' => 'Веб разработка',
                 'description' => 'Данный курс представляет данные по веб-разработке'
             ],
             [
-                'code' => 'CODE2',
+                'code' => 'code2',
                 'name' => 'Java разработка',
                 'description' => 'На курсе по Java разработки вы научитесь основам языка, а так же как правильно писать приложения.'
             ]
         ];
 
         $lessonsData = [
-            'CODE1' => [
+            'code1' => [
                 ['name' => 'Что такое веб разработка?', 'content' => 'Что такое сайт?', 'number' => 1],
                 ['name' => 'Фронтенд', 'content' => 'Что такое фронтенд?', 'number' => 2],
                 ['name' => 'Бэкенд', 'content' => 'Что такое бэкенд?', 'number' => 3],
                 ['name' => 'Фреймворки', 'content' => 'Для чего нужны фреймворки?', 'number' => 4],
                 ['name' => 'БД', 'content' => 'Какие базы данных существуют?', 'number' => 5]
             ],
-            'CODE2' => [
+            'code2' => [
                 ['name' => 'Введение', 'content' => 'Познакомиться с курсом.', 'number' => 1],
                 ['name' => 'Основы Java', 'content' => 'Основы языка.', 'number' => 2],
                 ['name' => 'Java pro', 'content' => 'Создание приложения на Java.', 'number' => 3],

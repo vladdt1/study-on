@@ -97,7 +97,7 @@ class BillingClient
             $response = $this->httpClient->request('GET', $this->billingUrl . '/api/v1/courses');
             return $response->toArray();
         } catch (\Exception $e) {
-            throw new BillingUnavailableException('Ошибка при получении списка курсов. ' . $e->getMessage());
+            throw new BillingUnavailableException('Ошибка при получении списка курсов. '. $token . $e->getMessage());
         }
     }
 
