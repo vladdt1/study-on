@@ -7,7 +7,7 @@
 
     <h5>
         Курс 
-		<a style="text-decoration: none" href="{{ path('app_course_show', { 'id': lesson.course.id }) }}">{{ lesson.course.name }}</a>
+		<a style="text-decoration: none" href="{{ path('app_course_show', { 'code': lesson.course.code }) }}">{{ lesson.course.title }}</a>
 	</h5>
 
     {{ include('lesson/_form.html.twig', {'button_label': 'Сохранить'}) }}

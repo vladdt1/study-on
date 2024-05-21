@@ -1,39 +1,84 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ course.name }}{% endblock %}
+{% block title %}{{ course.title }}{% endblock %}
 
 {% block body %}
-    <h1>{{ course.name }}</h1>
+    <h1>{{ course.title }}</h1>
     <p>{{ course.description }}</p>
-    
-    <h3>Уроки</h3>
-    <p>Цена {{ courseInfo.price }}</p>
-    {% if userInfo|length > 0 %}
-        {% if courseInfo.type == 'buy' %}
-            <a class="btn btn-success" 
-            href="{{ path('app_course_show', {'id': course.id}) }}"
-            >
-                Купить
-            </a>
-        {% endif %}
-        {% if courseInfo.type == 'rent' %}
-            <a class="btn btn-success" 
-            href="{{ path('app_course_show', {'id': course.id}) }}"
-            >
-            Арендовать на месяц
-            </a>
-        {% endif %}
-    {% endif %}
 
-    <ol>
-        {% for lesson in course.lessons|sort((a, b) => a.number <=> b.number) %}
-            <li>
-                <a style="text-decoration: none" href="{{ path('app_lesson_show', { 'id' : lesson.id }) }}">
-                    {{ lesson.name }}
-                </a>
-            </li>
-        {% endfor %}
-    </ol>
+    {% set transaction = transactions[course.code] ?? null %}
+    {% if transaction %}
+        {% if transaction.type == 'payment' %}
+			<p>Оплачено</p>
+		{% elseif transaction.type == 'rent' %}
+			{% if transaction.expires_at is defined %}
+				<p>Аренда до:
+		    		{{ transaction.expires_at|date('d-m-Y') }}</p>
+			{% else %}
+				<p>Арендовано, нет срока аренды</p>
+			{% endif %}
+		{% endif %}
+        <h3>Уроки</h3>
+        <ol>
+            {% for lesson in course.lessons|sort((a, b) => a.number <=> b.number) %}
+                <li>
+                    <a style="text-decoration: none" href="{{ path('app_lesson_show', { 'id' : lesson.id }) }}">
+                        {{ lesson.name }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ol>
+    {% else %}
+        {% if course.type == 1 %}
+            <p>Цена покупки:
+                {{ course.price }}
+            руб.</p>
+            <form action="{{ path('app_course_pay', {'code': course.code}) }}" method="post" class="purchase-form">
+                <input type="hidden" name="token" value="{{ userToken }}">
+                <button type="submit" class="btn btn-success">Купить курс</button>
+            </form>
+            <h3>Уроки</h3>
+            <ol>
+                {% for lesson in course.lessons|sort((a, b) => a.number <=> b.number) %}
+                    <li>
+                        <p>
+                            {{ lesson.name }}
+                        </p>
+                    </li>
+                {% endfor %}
+            </ol>
+		{% elseif course.type == 2 %}
+			<p>Цена аренды:
+				{{ course.price }}
+			руб.</p>
+			<form action="{{ path('app_course_rent', {'code': course.code}) }}" method="post" class="rent-form">
+				<input type="hidden" name="token" value="{{ userToken }}">
+				<button type="submit" class="btn btn-info">Арендовать</button>
+			</form>
+            <h3>Уроки</h3>
+            <ol>
+                {% for lesson in course.lessons|sort((a, b) => a.number <=> b.number) %}
+                    <li>
+                        <p>
+                            {{ lesson.name }}
+                        </p>
+                    </li>
+                {% endfor %}
+            </ol>
+		{% else %}
+			<p>Бесплатный доступ</p>
+            <h3>Уроки</h3>
+            <ol>
+                {% for lesson in course.lessons|sort((a, b) => a.number <=> b.number) %}
+                    <li>
+                        <a style="text-decoration: none" href="{{ path('app_lesson_show', { 'id' : lesson.id }) }}">
+                            {{ lesson.name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ol>
+		{% endif %}
+	{% endif %}
 
     <hr>
 
@@ -41,7 +86,30 @@
 
     {% if is_granted('ROLE_SUPER_ADMIN') %}
         <a class="btn btn-outline-secondary" href="{{ path('app_course_edit', {'id': course.id}) }}">Редактировать</a>
-        <a class="btn btn-outline-secondary" href="{{ path('app_lesson_new', {'id': course.id}) }}">Добавить урок</a>
+        <a class="btn btn-outline-secondary" href="{{ path('app_lesson_new', {'code': course.code}) }}">Добавить урок</a>
         {{ include('course/_delete_form.html.twig') }}
     {% endif %}
+
+    <script>
+		document.addEventListener('DOMContentLoaded', function () {
+            const purchaseForms = document.querySelectorAll('.purchase-form');
+            const rentForms = document.querySelectorAll('.rent-form');
+
+            purchaseForms.forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!confirm('Вы уверены, что хотите купить этот курс?')) {
+                        event.preventDefault();
+                    }
+                });
+            });
+
+            rentForms.forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!confirm('Вы уверены, что хотите арендовать этот курс?')) {
+                        event.preventDefault();
+                    }
+                });
+            });
+        });
+	</script>
 {% endblock %}

@@ -11,53 +11,47 @@
                 <div class="col-md-6">
                     <div class="card p-2 m-2">
                         <div class="card-body">
-                            {% for courseInf in courseInfo %}
-                                {% if course.code == courseInf.code %}
-                                    <h4>{{ course.name }}</h4>
-                                    {% if courseInf.price == 0 %}
-                                        <p>Начать бесплатно</p>
-                                    {% else %}
-                                        <p>Цена: {{ courseInf.price }}</p>
-                                    {% endif %}
-                                    <p>{{ course.description }}</p>
-                                    {% if userInfo is empty %}
-                                        <a class="btn btn-primary" 
-                                        href="{{ path('app_course_show', {'id': course.id}) }}"
-                                        >
-                                            Посмотреть
-                                        </a>
-                                    {% else %}
-                                        {% if courseInf.price == 0 %}
-                                            <a class="btn btn-primary" 
-                                            href="{{ path('app_course_show', {'id': course.id}) }}"
-                                            >
-                                                Пройти
-                                            </a>
-                                        {% else %}
-                                            <a class="btn btn-primary" 
-                                            href="{{ path('app_course_show', {'id': course.id}) }}"
-                                            >
-                                                Посмотреть
-                                            </a>
-                                            {% if courseInf.type == 'buy' %}
-                                                <a class="btn btn-success" 
-                                                href="{{ path('pay_course', {'code': course.code}) }}"
-                                                >
-                                                    Купить
-                                                </a>
-                                            {% endif %}
-                                            {% if courseInf.type == 'rent' %}
-                                                <a class="btn btn-success" 
-                                                href="{{ path('app_course_show', {'id': course.id}) }}"
-                                                >
-                                                    Арендовать на месяц
-                                                </a>
-                                            {% endif %}
-                                        {% endif %}
-                                    {% endif %}
+                            <h4>{{ course.title }}</h4>
+                            <p>{{ course.description }}</p>
 
-                                {% endif %}
-                            {% endfor %}
+                            {% set transaction = transactions[course.code] ?? null %}
+
+                            {% if transaction %}
+                                {% if transaction.type == 'payment' %}
+									<p>Оплачено</p>
+									<a href="{{ path('app_course_show', {'code': course.code}) }}" class="btn btn-primary">Продолжить обучение</a>
+								{% elseif transaction.type == 'rent' %}
+									{% if transaction.expires_at is defined %}
+										<p>Аренда до:
+											{{ transaction.expires_at|date('d-m-Y') }}</p>
+									{% else %}
+										<p>Арендовано, нет срока аренды</p>
+									{% endif %}
+									<a href="{{ path('app_course_show', {'code': course.code}) }}" class="btn btn-primary">Продолжить обучение</a>
+								{% endif %}
+                            {% else %}
+                                {% if course.type == 1 %}
+									<p>Цена покупки:
+										{{ course.price }}
+										руб.</p>
+									<form action="{{ path('app_course_pay', {'code': course.code}) }}" method="post" class="purchase-form">
+										<input type="hidden" name="token" value="{{ userToken }}">
+										<button type="submit" class="btn btn-success">Купить курс</button>
+									</form>
+                                    <a href="{{ path('app_course_show', {'code': course.code}) }}" class="btn btn-primary mt-2">Посмотреть содержимое курса</a>
+								{% elseif course.type == 2 %}
+									<p>Цена аренды на месяц:
+										{{ course.price }}
+										руб.</p>
+									<form action="{{ path('app_course_rent', {'code': course.code}) }}" method="post" class="rent-form">
+										<input type="hidden" name="token" value="{{ userToken }}">
+										<button type="submit" class="btn btn-info">Арендовать</button>
+									</form>
+                                    <a href="{{ path('app_course_show', {'code': course.code}) }}" class="btn btn-primary mt-2">Посмотреть содержимое курса</a>
+								{% else %}
+									<a href="{{ path('app_course_show', {'code': course.code}) }}" class="btn btn-primary">Бесплатный доступ</a>
+								{% endif %}
+							{% endif %}
                         </div>
                     </div>
                 </div>
@@ -72,4 +66,27 @@
     {% if is_granted('ROLE_SUPER_ADMIN') %}
         <a class="btn btn-outline-primary" href="{{ path('app_course_new') }}">Создать новый курс</a>
     {% endif %}
+
+    <script>
+		document.addEventListener('DOMContentLoaded', function () {
+            const purchaseForms = document.querySelectorAll('.purchase-form');
+            const rentForms = document.querySelectorAll('.rent-form');
+
+            purchaseForms.forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!confirm('Подтверждаете ли вы покупку курса?')) {
+                        event.preventDefault();
+                    }
+                });
+            });
+
+            rentForms.forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!confirm('Подтверждаете ли вы оплату аренды курса на месяц?')) {
+                        event.preventDefault();
+                    }
+                });
+            });
+        });
+	</script>
 {% endblock %}

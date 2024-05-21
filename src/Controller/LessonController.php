@@ -6,6 +6,7 @@ use App\Entity\Course;
 use App\Entity\Lesson;
 use App\Form\LessonType;
 use App\Repository\LessonRepository;
+use App\Repository\CourseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,10 +20,12 @@ use App\Security\User;
 class LessonController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
+    private CourseRepository $courseRepository;
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager, CourseRepository $courseRepository)
     {
         $this->entityManager = $entityManager;
+        $this->courseRepository = $courseRepository;
     }
 
     #[Route('/', name: 'app_lesson_index', methods: ['GET'])]
@@ -50,7 +53,7 @@ class LessonController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_lesson_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Lesson $lesson): Response
+    public function edit(Request $request, Lesson $lesson, LessonRepository $lessonRepository): Response
     {
         if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
             throw new AccessDeniedException('Доступ запрещен.');
@@ -59,12 +62,10 @@ class LessonController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->entityManager->flush();
-
-            $this->addFlash('success', 'Изменения урока сохранены.');
+            $lessonRepository->save($lesson, true);
 
             return $this->redirectToRoute(
-                'app_course_show', ['id' => $lesson->getCourse()->getId()],
+                'app_course_show', ['code' => $lesson->getCourse()->getCode()],
                 Response::HTTP_SEE_OTHER
             );
         }
@@ -88,7 +89,7 @@ class LessonController extends AbstractController
             return $this->redirectToRoute('app_lesson_index');
         }
 
-        $courseId = $lesson->getCourse()->getId();
+        $courseCode = $lesson->getCourse()->getCode();
 
         if ($this->isCsrfTokenValid('delete'.$lesson->getId(), $request->request->get('_token'))) {
             $this->entityManager->remove($lesson);
@@ -100,9 +101,44 @@ class LessonController extends AbstractController
         }
 
         return $this->redirectToRoute(
-            'app_course_show', ['id' => $courseId],
+            'app_course_show', ['code' => $courseCode],
             Response::HTTP_SEE_OTHER
         );
+    }
+
+    #[Route('/{code}/new', name: 'app_lesson_new', methods: ['GET', 'POST'])]
+    public function newLesson(Request $request, string $code, LessonRepository $lessonRepository): Response
+    {
+        if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw new AccessDeniedException('Доступ запрещен.');
+        }
+
+        $course = $this->courseRepository->findOneBy(['code' => $code]);
+        if (!$course) {
+            throw $this->createNotFoundException('Курс не найден.');
+        }
+
+        $lesson = new Lesson();
+        $lesson->setCourse($course);
+        $form = $this->createForm(LessonType::class, $lesson, [
+            'course' => $course,
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $lessonRepository->save($lesson, true);
+
+            return $this->redirectToRoute(
+                'app_course_show', ['code' => $course->getCode()],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        return $this->render('lesson/new.html.twig', [
+            'lesson' => $lesson,
+            'form' => $form,
+            'course' => $course,
+        ]);
     }
 
 }

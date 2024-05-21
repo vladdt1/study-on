@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Security\BillingAuthenticator;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Service\BillingClient;
 use App\Security\User;
 
@@ -23,79 +23,97 @@ use App\Security\User;
 class CourseController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
-    private BillingClient $billingClient;
+    private BillingClient $billingService;
+    private LessonRepository $lessonRepo;
+    private CourseRepository $courseRepo;
 
-    public function __construct(BillingClient $billingClient, EntityManagerInterface $entityManager)
+    public function __construct(CourseRepository $courseRepo, BillingClient $billingService, EntityManagerInterface $entityManager, LessonRepository $lessonRepo)
     {
         $this->entityManager = $entityManager;
-        $this->billingClient = $billingClient;
+        $this->billingService = $billingService;
+        $this->lessonRepo = $lessonRepo;
+        $this->courseRepo = $courseRepo;
     }
 
-    #[Route('/{code}/pay', name: 'pay_course', methods: ['POST'])]
-    public function payForCourse(BillingClient $billingClient, Request $request, string $code): JsonResponse
+    #[Route('/{code}/pay', name: 'app_course_pay', methods: ['POST'])]
+    public function purchaseCourse(Request $httpRequest, string $code): Response
     {
-        $user = $this->getUser();
+        $currentUser = $this->getUser();
 
-        // Получение API токена, если пользователь авторизован
-        $userToken = $user ? $user->getApiToken() : null;
-        
+        $userToken = $currentUser ? $currentUser->getApiToken() : null;
+
         if (!$userToken) {
-            return $this->json(['error' => 'Вы не авторезированы'], Response::HTTP_UNAUTHORIZED);
+            return $this->redirectToRoute('app_login');
         }
-
-        $paymentResult = $billingClient->payForCourse($userToken, $code);
-
-        if (isset($paymentResult['error'])) {
-            return $this->json(['error' => $paymentResult['error']], Response::HTTP_BAD_REQUEST);
+        $token = $httpRequest->request->get('token');
+        
+        try {
+            $result = $this->billingService->payForCourse($token, $code);
+            if (isset($result['success']) && $result['success']) {
+                $this->addFlash('success', 'Курс был успешно приобретен и доступен для изучения.');
+            } else {
+                $this->addFlash('error', 'Не удалось приобрести курс: ' . ($result['message'] ?? 'Ошибка сервера'));
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Ошибка при покупке курса: ' . $e->getMessage());
         }
-
-        return $this->json($paymentResult);
+        return $this->redirectToRoute('app_course_show', ['code' => $code]);
     }
 
     #[Route('/', name: 'app_course_index', methods: ['GET'])]
-    public function index(Request $request, CourseRepository $courseRepository): Response
+    public function listCourses(Request $httpRequest, CourseRepository $courseRepo): Response
     {
-        // Получение текущего пользователя
-        $user = $this->getUser();
+        $currentUser = $this->getUser();
 
-        // Получение API токена, если пользователь авторизован
-        $userToken = $user ? $user->getApiToken() : null;
-        $userInfo = [];
-        $courses = [];
+        $userToken = $currentUser ? $currentUser->getApiToken() : null;
+        $courseList = [];
 
-        if ($userToken) {
-            $userInfo = $this->billingClient->getUserInfo($userToken);
-        }
         try {
-            $courses = $this->billingClient->getCourses();
+            $courseList = $this->billingService->getCourses();
         } catch (BillingUnavailableException $e) {
-            $this->addFlash('error', 'Не удалось получить информацию о списке курсов.');
+            $this->addFlash('error', 'Не удалось получить список курсов.');
+        }
+
+        $transactionHistory = [];
+        if ($userToken) {
+            $transactions = $this->billingService->getTransactions($userToken);
+
+            foreach ($transactions as $transaction) {
+                $transactionHistory[$transaction['course_id']] = $transaction;
+            }
         }
 
         return $this->render('course/index.html.twig', [
-            'courses' => $courseRepository->findAll(),
-            'userInfo' => $userInfo,
-            'courseInfo' => $courses,
-            'userToken' => $userToken
+            'courses' => $courseList,
+            'transactions' => $transactionHistory,
+            'userToken' => $userToken,
         ]);
     }
 
     #[Route('/new', name: 'app_course_new', methods: ['GET', 'POST'])]
-    public function new(Request $request): Response
+    public function createCourse(Request $httpRequest, CourseRepository $courseRepo): Response
     {
         if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
-            throw new AccessDeniedHttpException();
+            throw new AccessDeniedException('У вас нет доступа к этой операции.');
         }
         $course = new Course();
         $form = $this->createForm(CourseType::class, $course);
-        $form->handleRequest($request);
+        $form->handleRequest($httpRequest);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->entityManager->persist($course);
-            $this->entityManager->flush();
+            $existingCourse = $courseRepo->findOneBy(['code' => $course->getCode()]);
+            if ($existingCourse) {
+                $this->addFlash('error', 'Курс с таким кодом уже существует.');
+                return $this->redirectToRoute('app_course_new');
+            }
 
-            $this->addFlash('success', 'Курс успешно создан.');
+            try {
+                $this->billingService->createCourse($course);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Ошибка при создании курса в биллинге: ' . $e->getMessage());
+            }
 
+            $courseRepo->save($course, true);
             return $this->redirectToRoute('app_course_index');
         }
 
@@ -105,52 +123,71 @@ class CourseController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_course_show', methods: ['GET'])]
-    public function show(Course $course): Response
+    #[Route('/{code}', name: 'app_course_show', methods: ['GET'])]
+    public function showCourse(string $code, CourseRepository $courseRepo): Response
     {
-        // Получение текущего пользователя
-        $user = $this->getUser();
+        $currentUser = $this->getUser();
 
-        // Получение API токена, если пользователь авторизован
-        $userToken = $user ? $user->getApiToken() : null;
-        $userInfo = [];
-        $courseInfo = [];
+        $userToken = $currentUser ? $currentUser->getApiToken() : null;
 
+        $transactionHistory = [];
         if ($userToken) {
-            $userInfo = $this->billingClient->getUserInfo($userToken);
+            $transactions = $this->billingService->getTransactions($userToken);
+
+            foreach ($transactions as $transaction) {
+                $transactionHistory[$transaction['course_id']] = $transaction;
+            }
         }
+
+        $course = $courseRepo->findOneBy(['code' => $code]);
+
+        if (!$course) {
+            $courseData = $this->billingService->getCourse($code);
+
+            $course = new Course();
+            $course
+                ->setCode($courseData['code'])
+                ->setTitle($courseData['title'])
+                ->setDescription($courseData['description'])
+                ->setType($courseData['type'])
+                ->setPrice($courseData['price']);
+
+            $courseRepo->save($course, true);
+        }
+
         try {
-            $code = $course->getCode();
-            $courseInfo = $this->billingClient->getCourse($code);
+            $lessons = $this->lessonRepo->findBy(['course' => $course]);
         } catch (BillingUnavailableException $e) {
-            $this->addFlash('error', 'Не удалось получить информацию о списке курсов.');
+            $this->addFlash('error', 'Не удалось получить информацию о курсе.');
         }
 
         return $this->render('course/show.html.twig', [
             'course' => $course,
-            'userInfo' => $userInfo,
-            'courseInfo' => $courseInfo,
+            'transactions' => $transactionHistory,
+            'lessons' => $lessons,
+            'userToken' => $userToken,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'app_course_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Course $course): Response
+    public function editCourse(Request $httpRequest, Course $course, CourseRepository $courseRepo): Response
     {
         if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
             throw new AccessDeniedException('Доступ запрещен.');
         }
+
         $form = $this->createForm(CourseType::class, $course);
-        $form->handleRequest($request);
+        $form->handleRequest($httpRequest);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->entityManager->flush();
+            try {
+                $this->billingService->updateCourse($course);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Ошибка при обновлении курса в биллинге: ' . $e->getMessage());
+            }
+            $courseRepo->save($course, true);
 
-            $this->addFlash('success', 'Изменения курса сохранены.');
-
-            return $this->redirectToRoute(
-                'app_course_show', ['id' => $course->getId()],
-                Response::HTTP_SEE_OTHER
-            );
+            return $this->redirectToRoute('app_course_show', ['code' => $course->getCode()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('course/edit.html.twig', [
@@ -160,11 +197,20 @@ class CourseController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_course_delete', methods: ['POST'])]
-    public function delete(Request $request, Course $course): Response
+    public function deleteCourse(Request $httpRequest, Course $course, CourseRepository $courseRepo): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$course->getId(), $request->request->get('_token'))) {
+        if (!$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw new AccessDeniedException('Доступ запрещен.');
+        }
+
+        if ($this->isCsrfTokenValid('delete' . $course->getId(), $httpRequest->request->get('_token'))) {
+            try {
+                $this->billingService->deleteCourse($course->getCode());
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Ошибка при удалении курса в биллинге: ' . $e->getMessage());
+            }
+
             $this->entityManager->remove($course);
-            $this->entityManager->flush();
 
             $this->addFlash('success', 'Курс успешно удален.');
         } else {
@@ -174,29 +220,30 @@ class CourseController extends AbstractController
         return $this->redirectToRoute('app_course_index');
     }
 
-    #[Route('{id}/new/lesson', name: 'app_lesson_new', methods: ['GET', 'POST'])]
-    public function newLesson(Request $request, Course $course, LessonRepository $lessonRepository): Response
+    #[Route('/{code}/rent', name: 'app_course_rent', methods: ['POST'])]
+    public function rentCourse(Request $httpRequest, string $code): Response
     {
-        $lesson = new Lesson();
-        $lesson->setCourse($course);
-        $form = $this->createForm(LessonType::class, $lesson, [
-            'course' => $course,
-        ]);
-        $form->handleRequest($request);
+        $currentUser = $this->getUser();
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $lessonRepository->save($lesson, true);
+        $userToken = $currentUser ? $currentUser->getApiToken() : null;
 
-            return $this->redirectToRoute(
-                'app_course_show', ['id' => $course->getId()],
-                Response::HTTP_SEE_OTHER
-            );
+        if (!$userToken) {
+            return $this->redirectToRoute('app_login');
         }
 
-        return $this->render('lesson/new.html.twig', [
-            'lesson' => $lesson,
-            'form' => $form,
-            'course' => $course,
-        ]);
+        $token = $httpRequest->request->get('token');
+
+        try {
+            $result = $this->billingService->payForCourse($token, $code);
+
+            if (isset($result['expires_at'])) {
+                $this->addFlash('success', 'Курс успешно арендован до ' . $result['expires_at']);
+            } else {
+                $this->addFlash('error', 'Не удалось арендовать курс: ' . ($result['message'] ?? 'Ошибка сервера'));
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Ошибка аренды курса: ' . $e->getMessage());
+        }
+        return $this->redirectToRoute('app_course_show', ['code' => $code]);
     }
 }

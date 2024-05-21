@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ lesson.course.name }}{% endblock %}
+{% block title %}{{ lesson.course.title }}{% endblock %}
 
 {% block body %}
     <h1>{{ lesson.name }}</h1>
 
     <h5>
         Курс 
-		<a style="text-decoration: none" href="{{ path('app_course_show', { 'id': lesson.course.id }) }}">{{ lesson.course.name }}</a>
+		<a style="text-decoration: none" href="{{ path('app_course_show', { 'code': lesson.course.code }) }}">{{ lesson.course.title }}</a>
 	</h5>
     
     {% if is_granted('ROLE_SUPER_ADMIN') %}

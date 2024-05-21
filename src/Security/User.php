@@ -7,10 +7,9 @@ use Symfony\Component\Security\Core\User\UserInterface;
 class User implements UserInterface
 {
     private $email;
-
     private $roles = [];
-
     private $apiToken;
+    private $refreshToken;
 
     public function getEmail(): ?string
     {
@@ -20,7 +19,6 @@ class User implements UserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
     }
 
@@ -49,7 +47,6 @@ class User implements UserInterface
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
-
         return $this;
     }
 
@@ -70,7 +67,17 @@ class User implements UserInterface
     public function setApiToken(?string $apiToken): self
     {
         $this->apiToken = $apiToken;
+        return $this;
+    }
 
+    public function getRefreshToken(): ?string
+    {
+        return $this->refreshToken;
+    }
+
+    public function setRefreshToken(?string $refreshToken): self
+    {
+        $this->refreshToken = $refreshToken;
         return $this;
     }
 }

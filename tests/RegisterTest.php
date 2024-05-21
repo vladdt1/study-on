@@ -93,27 +93,27 @@ class RegisterTest extends AbstractTest
         $this->assertSelectorTextContains('div.u2', 'The values do not match.');
     }
 
-    // public function testRegister(): void
-    // {
-    //     $client = AbstractTest::createTestClient();
-    //     $client->disableReboot();
+    public function testRegister(): void
+    {
+        $client = AbstractTest::createTestClient();
+        $client->disableReboot();
 
-    //     // Подменяем реальный сервис биллинга на мок
-    //     $client->getContainer()->set(
-    //         BillingClient::class, 
-    //         new BillingClientMock()
-    //     );        
+        // Подменяем реальный сервис биллинга на мок
+        $client->getContainer()->set(
+            BillingClient::class, 
+            new BillingClientMock()
+        );        
 
-    //     $crawler = $client->request('GET', '/register');
-    //     $form = $crawler->selectButton('Продолжить')->form([
-    //         'registration_form[email]' => 'end@example.com',
-    //         'registration_form[plainPassword][first]' => '123456',
-    //         'registration_form[plainPassword][second]' => '123456'
-    //     ]);        
+        $crawler = $client->request('GET', '/register');
+        $form = $crawler->selectButton('Продолжить')->form([
+            'registration_form[email]' => 'end@example.com',
+            'registration_form[plainPassword][first]' => '123456',
+            'registration_form[plainPassword][second]' => '123456'
+        ]);        
 
-    //     $client->submit($form);
+        $client->submit($form);
 
-    //     // Проверяем редирект на страницу профиля или курсов
-    //     $this->assertResponseRedirects('/courses/');
-    // }
+        // Проверяем редирект на страницу профиля или курсов
+        $this->assertResponseRedirects('/courses/');
+    }
 }

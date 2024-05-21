@@ -4,62 +4,113 @@ namespace App\DataFixtures;
 
 use App\Entity\Course;
 use App\Entity\Lesson;
+use App\Service\BillingClient;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
 class AppFixtures extends Fixture
 {
-    public function load(ObjectManager $manager): void
+    private BillingClient $billingService;
+
+    public function __construct(BillingClient $billingService)
     {
-        $coursesData = [
-            [
-                'code' => 'code1',
-                'name' => 'Веб разработка',
-                'description' => 'Данный курс представляет данные по веб-разработке'
-            ],
-            [
-                'code' => 'code2',
-                'name' => 'Java разработка',
-                'description' => 'На курсе по Java разработки вы научитесь основам языка, а так же как правильно писать приложения.'
-            ]
-        ];
+        $this->billingService = $billingService;
+    }
 
-        $lessonsData = [
-            'code1' => [
-                ['name' => 'Что такое веб разработка?', 'content' => 'Что такое сайт?', 'number' => 1],
-                ['name' => 'Фронтенд', 'content' => 'Что такое фронтенд?', 'number' => 2],
-                ['name' => 'Бэкенд', 'content' => 'Что такое бэкенд?', 'number' => 3],
-                ['name' => 'Фреймворки', 'content' => 'Для чего нужны фреймворки?', 'number' => 4],
-                ['name' => 'БД', 'content' => 'Какие базы данных существуют?', 'number' => 5]
-            ],
-            'code2' => [
-                ['name' => 'Введение', 'content' => 'Познакомиться с курсом.', 'number' => 1],
-                ['name' => 'Основы Java', 'content' => 'Основы языка.', 'number' => 2],
-                ['name' => 'Java pro', 'content' => 'Создание приложения на Java.', 'number' => 3],
-                ['name' => 'Итоги', 'content' => 'Подведем итоги курса.', 'number' => 4]
-            ]
-        ];
+    public function load(ObjectManager $objectManager): void
+    {
+        // Запрашиваем курсы через API
+        $courseList = $this->billingService->getCourses();
 
-        foreach ($coursesData as $courseData) {
+        foreach ($courseList as $courseInfo) {
             $course = new Course();
-            $course->setCode($courseData['code'])
-                   ->setName($courseData['name'])
-                   ->setDescription($courseData['description']);
+            $course
+                ->setCode($courseInfo['code'])
+                ->setTitle($courseInfo['title'])
+                ->setDescription($courseInfo['description'])
+                ->setType($courseInfo['type'])
+                ->setPrice($courseInfo['price']);
 
-            // Добавляем уроки к курсу
-            if (array_key_exists($course->getCode(), $lessonsData)) {
-                foreach ($lessonsData[$course->getCode()] as $lessonData) {
-                    $lesson = new Lesson();
-                    $lesson->setName($lessonData['name'])
-                           ->setContent($lessonData['content'])
-                           ->setNumber($lessonData['number']);
-                    $course->addLesson($lesson);
-                }
-            }
+            $this->attachLessonsToCourse($objectManager, $course, $courseInfo['code']);
 
-            $manager->persist($course);
+            $objectManager->persist($course);
         }
 
-        $manager->flush();
+        $objectManager->flush();
+    }
+
+    private function attachLessonsToCourse(ObjectManager $objectManager, Course $course, string $courseCode): void
+    {
+        $lessonDetails = $this->retrieveLessonData($courseCode);
+
+        foreach ($lessonDetails as $lessonInfo) {
+            $lesson = new Lesson();
+            $lesson
+                ->setName($lessonInfo['name'])
+                ->setContent($lessonInfo['content'])
+                ->setNumber($lessonInfo['number'])
+                ->setCourse($course);
+            $objectManager->persist($lesson);
+        }
+    }
+
+    private function retrieveLessonData(string $courseCode): array
+    {
+        $lessonArray = [];
+
+        if ($courseCode === 'code1') {
+            $lessonArray = [
+                [
+                    'name' => 'Что такое веб разработка?',
+                    'content' => 'Что такое сайт?',
+                    'number' => 1,
+                ],
+                [
+                    'name' => 'Фронтенд',
+                    'content' => 'Что такое фронтенд?',
+                    'number' => 2,
+                ],
+                [
+                    'name' => 'Бэкенд',
+                    'content' => 'Что такое бэкенд?',
+                    'number' => 3,
+                ],
+                [
+                    'name' => 'Фреймворки',
+                    'content' => 'Для чего нужны фреймворки?',
+                    'number' => 4,
+                ],
+                [
+                    'name' => 'БД',
+                    'content' => 'Что такое бэкенд??',
+                    'number' => 5,
+                ]
+            ];
+        } elseif ($courseCode === 'code2') {
+            $lessonArray = [
+                [
+                    'name' => 'Введение',
+                    'content' => 'Познакомиться с курсом.',
+                    'number' => 1,
+                ],
+                [
+                    'name' => 'Основы Java',
+                    'content' => 'Основы языка.',
+                    'number' => 2,
+                ],
+                [
+                    'name' => 'Java pro',
+                    'content' => 'Создание приложения на Java.',
+                    'number' => 3,
+                ],
+                [
+                    'name' => 'Итоги',
+                    'content' => 'Подведем итоги курса.',
+                    'number' => 4,
+                ],
+            ];
+        }
+
+        return $lessonArray;
     }
 }

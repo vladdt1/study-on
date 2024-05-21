@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-final class Version20240408164422 extends AbstractMigration
+final class Version20240520182851 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -19,18 +19,10 @@ final class Version20240408164422 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql("DO \$\$
-        BEGIN
-            IF NOT EXISTS (SELECT FROM pg_class where relname = 'course_id_seq') THEN
-                CREATE SEQUENCE course_id_seq INCREMENT BY 1 MINVALUE 1 START 1;
-            END IF;
-            IF NOT EXISTS (SELECT FROM pg_class where relname = 'lesson_id_seq') THEN
-                CREATE SEQUENCE lesson_id_seq INCREMENT BY 1 MINVALUE 1 START 1;
-            END IF;
-        END
-        \$\$;");
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE course (id INT NOT NULL, code VARCHAR(255) NOT NULL, name VARCHAR(255) NOT NULL, description VARCHAR(1000) DEFAULT NULL, PRIMARY KEY(id))');
+        $this->addSql('CREATE SEQUENCE course_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
+        $this->addSql('CREATE SEQUENCE lesson_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
+        $this->addSql('CREATE TABLE course (id INT NOT NULL, code VARCHAR(255) NOT NULL, title VARCHAR(255) NOT NULL, description VARCHAR(1000) DEFAULT NULL, price DOUBLE PRECISION DEFAULT NULL, type INT NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_169E6FB977153098 ON course (code)');
         $this->addSql('CREATE TABLE lesson (id INT NOT NULL, course_id INT NOT NULL, name VARCHAR(255) NOT NULL, content TEXT NOT NULL, number INT NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE INDEX IDX_F87474F3591CC992 ON lesson (course_id)');
