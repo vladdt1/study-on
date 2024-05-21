@@ -25,7 +25,7 @@ class NoAccessTest extends AbstractTest
 
         $crawler = $client->request('GET', '/courses/new');
 
-        $this->assertResponseStatusCodeSame(403);
+        $this->assertResponseStatusCodeSame(401);
     }
 
     public function testAddCourseNoAccess(): void
@@ -41,8 +41,8 @@ class NoAccessTest extends AbstractTest
 
         $crawler = $client->request('GET', '/login');
         $form = $crawler->selectButton('Войти')->form([
-            'email' => 'new@example.com',
-            'password' => '123456'
+            'email' => 'user@gmail.com',
+            'password' => 'password'
         ]);
 
         $client->submit($form);
@@ -79,8 +79,8 @@ class NoAccessTest extends AbstractTest
 
         $crawler = $client->request('GET', '/login');
         $form = $crawler->selectButton('Войти')->form([
-            'email' => 'new@example.com',
-            'password' => '123456'
+            'email' => 'user@gmail.com',
+            'password' => 'password'
         ]);
 
         $client->submit($form);

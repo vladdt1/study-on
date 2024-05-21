@@ -64,7 +64,8 @@ abstract class AbstractTest extends WebTestCase
 
         foreach ($fixtures as $fixture) {
             if (!\is_object($fixture)) {
-                $fixture = new $fixture();
+                // Создаем фикстуры через контейнер, если они имеют зависимости
+                $fixture = static::getContainer()->get($fixture);
             }
 
             if ($fixture instanceof ContainerAwareInterface) {
@@ -79,6 +80,7 @@ abstract class AbstractTest extends WebTestCase
         $executor = new ORMExecutor($em, $purger);
         $executor->execute($loader->getFixtures());
     }
+
 
     public function assertResponseOk(?Response $response = null, ?string $message = null, string $type = 'text/html')
     {

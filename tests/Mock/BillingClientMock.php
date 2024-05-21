@@ -4,6 +4,7 @@ namespace App\Tests\Mock;
 use App\Service\BillingClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Exception\BillingUnavailableException;
+use Symfony\Component\HttpFoundation\Response;
 
 class BillingClientMock extends BillingClient
 {
@@ -11,6 +12,15 @@ class BillingClientMock extends BillingClient
     public function __construct()
     {
         // Не вызываем конструктор родителя, так как он ожидает аргументы, не нужные для мок-объекта
+    }
+
+    public function getCourse(string $code): array
+    {
+        if ($code === '99999') {
+            throw new \Exception('Не удалось загрузить информацию о курсе. HTTP/1.1 404 Not Found returned for "http://billing.study-on.local/api/v1/courses/99999".', Response::HTTP_NOT_FOUND);
+        }
+
+        return parent::getCourse($code);
     }
 
     // Переопределение методов для возвращения фиктивных данных

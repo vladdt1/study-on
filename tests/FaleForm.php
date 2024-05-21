@@ -9,7 +9,7 @@ use App\Entity\Course;
 use Doctrine\ORM\EntityManagerInterface;
 use App\DataFixtures\AppFixtures;
 
-class CourseTest extends AbstractTest
+class FaleForm extends AbstractTest
 {
     protected function getFixtures(): array
     {
@@ -55,8 +55,8 @@ class CourseTest extends AbstractTest
 
         // Заполняем форму редактирования
         $form = $crawler->selectButton('Сохранить')->form([
-            'course[code]' => 'CODE 1',
-            'course[name]' => '',
+            'course[code]' => 'code1',
+            'course[title]' => '',
             'course[description]' => 'Данный курс создан для начинающих веб разработчиков',
         ]);
         $client->submit($form);
@@ -102,8 +102,10 @@ class CourseTest extends AbstractTest
         // Заполняем форму редактирования
         $form = $crawler->selectButton('Сохранить')->form([
             'course[code]' => '',
-            'course[name]' => 'Веб разработка',
+            'course[title]' => 'Веб разработка',
             'course[description]' => 'Данный курс создан для начинающих веб разработчиков',
+            'course[type]' => 2,
+            'course[price]' => 29.9,
         ]);
         $client->submit($form);
 
@@ -148,8 +150,10 @@ class CourseTest extends AbstractTest
         // Заполняем форму редактирования
         $form = $crawler->selectButton('Сохранить')->form([
             'course[code]' => 'CODE 1',
-            'course[name]' => 'Веб разработка',
+            'course[title]' => 'Веб разработка',
             'course[description]' => '',
+            'course[type]' => 2,
+            'course[price]' => 29.9,
         ]);
         $client->submit($form);
 
@@ -194,8 +198,10 @@ class CourseTest extends AbstractTest
         // Заполняем форму редактирования
         $form = $crawler->selectButton('Сохранить')->form([
             'course[code]' => 'CODE 1',
-            'course[name]' => '123456789101112131415161718192021222324252728293031323334353637383940',
+            'course[title]' => '123456789101112131415161718192021222324252728293031323334353637383940',
             'course[description]' => 'Данный курс создан для начинающих веб разработчиков',
+            'course[type]' => 2,
+            'course[price]' => 29.9,
         ]);
         $client->submit($form);
 
@@ -228,8 +234,10 @@ class CourseTest extends AbstractTest
         $crawler = $client->request('GET', '/courses/new');
         $form = $crawler->selectButton('Сохранить')->form([
             'course[code]' => 'TEST1',
-            'course[name]' => 'Тестовый курс 1',
+            'course[title]' => 'Тестовый курс 1',
             'course[description]' => '',
+            'course[type]' => 2,
+            'course[price]' => 29.9,
         ]);
         $client->submit($form);
         $this->assertSelectorTextContains('html', 'Описание не может быть пустым');
@@ -261,8 +269,10 @@ class CourseTest extends AbstractTest
         $crawler = $client->request('GET', '/courses/new');
         $form = $crawler->selectButton('Сохранить')->form([
             'course[code]' => '',
-            'course[name]' => 'Тестовый курс 1',
+            'course[title]' => 'Тестовый курс 1',
             'course[description]' => 'Описание тестового курса',
+            'course[type]' => 2,
+            'course[price]' => 29.9,
         ]);
         $client->submit($form);
         $this->assertSelectorTextContains('html', 'Символьный код не может быть пустым');
@@ -294,8 +304,10 @@ class CourseTest extends AbstractTest
         $crawler = $client->request('GET', '/courses/new');
         $form = $crawler->selectButton('Сохранить')->form([
             'course[code]' => 'TEST1',
-            'course[name]' => '',
+            'course[title]' => '',
             'course[description]' => 'Описание тестового курса',
+            'course[type]' => 2,
+            'course[price]' => 29.9,
         ]);
         $client->submit($form);
         $this->assertSelectorTextContains('html', 'Название не может быть пустым');

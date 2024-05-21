@@ -3,25 +3,13 @@
 namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use App\Tests\AbstractTest;
 use App\Tests\Mock\BillingClientMock;
-use App\Entity\Course;
-use Doctrine\ORM\EntityManagerInterface;
-use App\DataFixtures\AppFixtures;
 
-class AuthTest extends AbstractTest
+class AuthTest extends WebTestCase
 {
-    protected function getFixtures(): array
-    {
-        return [
-            AppFixtures::class,
-        ];
-    }
-
     public function testAuth(): void
     {
-        $client = AbstractTest::createTestClient();
-        $client->disableReboot();
+        $client = static::createClient();
 
         // Подменяем реальный сервис биллинга на мок
         $client->getContainer()->set(
@@ -31,8 +19,8 @@ class AuthTest extends AbstractTest
 
         $crawler = $client->request('GET', '/login');
         $form = $crawler->selectButton('Войти')->form([
-            'email' => 'new@example.com',
-            'password' => '123456'
+            'email' => 'user@gmail.com',
+            'password' => 'password'
         ]);
 
         $client->submit($form);
@@ -43,8 +31,7 @@ class AuthTest extends AbstractTest
 
     public function testNoAuth(): void
     {
-        $client = AbstractTest::createTestClient();
-        $client->disableReboot();
+        $client = static::createClient();
 
         // Подменяем реальный сервис биллинга на мок
         $client->getContainer()->set(

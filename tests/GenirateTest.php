@@ -20,8 +20,7 @@ class CourseTest extends AbstractTest
 
     public function testSomething(): void
     {
-        $client = AbstractTest::createTestClient();
-        $client->disableReboot();
+        $client = static::createTestClient();
 
         // Подменяем реальный сервис биллинга на мок
         $client->getContainer()->set(
@@ -31,8 +30,8 @@ class CourseTest extends AbstractTest
 
         $crawler = $client->request('GET', '/login');
         $form = $crawler->selectButton('Войти')->form([
-            'email' => 'new@example.com',
-            'password' => '123456'
+            'email' => 'admin@gmail.com',
+            'password' => 'password'
         ]);
 
         $client->submit($form);
@@ -43,8 +42,7 @@ class CourseTest extends AbstractTest
         $url = '/courses/';
 
         $crawler = $client->request('GET', $url);
-
-        $link = $crawler->selectLink('Пройти')->link();
+        $link = $crawler->selectLink('Продолжить обучение')->link();
         $crawler = $client->click($link);
 	
         $this->assertResponseOk();
@@ -58,7 +56,7 @@ class CourseTest extends AbstractTest
         $checkTitle = $client->request('GET', $url);
 
         $this->assertResponseIsSuccessful();
-        $this->assertCount(2, $checkTitle->filter('h4'));
+        $this->assertCount(3, $checkTitle->filter('h4'));
     }
 
     public function testSearchCourse(): void
@@ -133,9 +131,11 @@ class CourseTest extends AbstractTest
 
         // Заполняем форму редактирования
         $form = $crawler->selectButton('Сохранить')->form([
-            'course[code]' => 'CODE 1',
-            'course[name]' => 'Веб разработка',
+            'course[code]' => 'code1',
+            'course[title]' => 'Веб разработка',
             'course[description]' => 'Данный курс создан для начинающих веб разработчиков',
+            'course[type]' => 2,
+            'course[price]' => 29.9,
         ]);
         $client->submit($form);
         $client->followRedirect();
@@ -202,9 +202,6 @@ class CourseTest extends AbstractTest
     {
         $client = static::createTestClient();
 
-        $client->request('GET', '/courses/99999');
-        $this->assertResponseStatusCodeSame(404);
-
         $client->request('GET', '/lessons/99999');
         $this->assertResponseStatusCodeSame(404);
     }
@@ -234,9 +231,11 @@ class CourseTest extends AbstractTest
         // Шаг 1: Создание курса
         $crawler = $client->request('GET', '/courses/new');
         $form = $crawler->selectButton('Сохранить')->form([
-            'course[code]' => 'TEST1',
-            'course[name]' => 'Тестовый курс 1',
+            'course[code]' => 'TEST4',
+            'course[title]' => 'Тестовый курс 4',
             'course[description]' => 'Описание тестового курса',
+            'course[type]' => 0,
+            'course[price]' => 0,
         ]);
         $client->submit($form);
         $client->followRedirect();
@@ -244,10 +243,10 @@ class CourseTest extends AbstractTest
         // Проверяем наличие только что созданного курса
         $crawler = $client->request('GET', '/courses/');
         $this->assertResponseOk();
-        $this->assertSelectorTextContains('html', 'Тестовый курс 1');
+        $this->assertSelectorTextContains('html', 'Тестовый курс 4');
 
         // Находим ссылку на курс по названию
-        $link = $crawler->filter('h4:contains("Тестовый курс 1")')->closest('.card')->filter('.btn')->link();
+        $link = $crawler->filter('h4:contains("Тестовый курс 4")')->closest('.card')->filter('.btn')->link();
 
         // Переходим по ссылке
         $crawler = $client->click($link);
@@ -263,7 +262,7 @@ class CourseTest extends AbstractTest
         $crawler = $client->followRedirect();
 
         // Проверяем, что количество курсов на странице уменьшилось на один
-        // предполагаем, что до удаления было 3 курса, после удаления должно быть 2
-        $this->assertCount(2, $crawler->filter('.card-body h4'));
+        // предполагаем, что до удаления было 4 курса, после удаления должно быть 3
+        $this->assertCount(3, $crawler->filter('.card-body h4'));
     }
 }

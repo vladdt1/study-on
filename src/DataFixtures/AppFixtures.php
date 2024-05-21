@@ -1,5 +1,4 @@
 <?php
-
 namespace App\DataFixtures;
 
 use App\Entity\Course;
@@ -10,56 +9,55 @@ use Doctrine\Persistence\ObjectManager;
 
 class AppFixtures extends Fixture
 {
-    private BillingClient $billingService;
+    private BillingClient $billingClient;
 
-    public function __construct(BillingClient $billingService)
+    public function __construct(BillingClient $billingClient)
     {
-        $this->billingService = $billingService;
+        $this->billingClient = $billingClient;
     }
 
-    public function load(ObjectManager $objectManager): void
+    public function load(ObjectManager $manager): void
     {
-        // Запрашиваем курсы через API
-        $courseList = $this->billingService->getCourses();
+        $courses = $this->billingClient->getCourses();
 
-        foreach ($courseList as $courseInfo) {
+        foreach ($courses as $courseData) {
             $course = new Course();
             $course
-                ->setCode($courseInfo['code'])
-                ->setTitle($courseInfo['title'])
-                ->setDescription($courseInfo['description'])
-                ->setType($courseInfo['type'])
-                ->setPrice($courseInfo['price']);
+                ->setCode($courseData['code'])
+                ->setTitle($courseData['title'])
+                ->setDescription($courseData['description'])
+                ->setType($courseData['type'])
+                ->setPrice($courseData['price']);
 
-            $this->attachLessonsToCourse($objectManager, $course, $courseInfo['code']);
+            $this->addLessonsToCourse($manager, $course, $courseData['code']);
 
-            $objectManager->persist($course);
+            $manager->persist($course);
         }
 
-        $objectManager->flush();
+        $manager->flush();
     }
 
-    private function attachLessonsToCourse(ObjectManager $objectManager, Course $course, string $courseCode): void
+    private function addLessonsToCourse(ObjectManager $manager, Course $course, string $courseCode): void
     {
-        $lessonDetails = $this->retrieveLessonData($courseCode);
+        $lessonsData = $this->getLessonsDataForCourse($courseCode);
 
-        foreach ($lessonDetails as $lessonInfo) {
+        foreach ($lessonsData as $lessonData) {
             $lesson = new Lesson();
             $lesson
-                ->setName($lessonInfo['name'])
-                ->setContent($lessonInfo['content'])
-                ->setNumber($lessonInfo['number'])
+                ->setName($lessonData['name'])
+                ->setContent($lessonData['content'])
+                ->setNumber($lessonData['number'])
                 ->setCourse($course);
-            $objectManager->persist($lesson);
+            $manager->persist($lesson);
         }
     }
 
-    private function retrieveLessonData(string $courseCode): array
+    private function getLessonsDataForCourse(string $courseCode): array
     {
-        $lessonArray = [];
+        $lessons = [];
 
         if ($courseCode === 'code1') {
-            $lessonArray = [
+            $lessons = [
                 [
                     'name' => 'Что такое веб разработка?',
                     'content' => 'Что такое сайт?',
@@ -87,7 +85,7 @@ class AppFixtures extends Fixture
                 ]
             ];
         } elseif ($courseCode === 'code2') {
-            $lessonArray = [
+            $lessons = [
                 [
                     'name' => 'Введение',
                     'content' => 'Познакомиться с курсом.',
@@ -111,6 +109,6 @@ class AppFixtures extends Fixture
             ];
         }
 
-        return $lessonArray;
+        return $lessons;
     }
 }

@@ -17,7 +17,7 @@
                             Админ
                         {% endif %}
                     </p>
-                    <p class="card-text"><strong>Баланс:</strong> {{ balance }} руб.</p>
+                    <p class="card-text balance"><strong>Баланс:</strong> {{ balance }} руб.</p>
                     <div class="d-grid gap-2 mt-4">
                         <form action="{{ path('app_logout') }}" method="post">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">

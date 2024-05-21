@@ -31,9 +31,9 @@ class RegisterTest extends AbstractTest
 
         $crawler = $client->request('GET', '/register');
         $form = $crawler->selectButton('Продолжить')->form([
-            'registration_form[email]' => 'test@example.com',
-            'registration_form[plainPassword][first]' => '123456',
-            'registration_form[plainPassword][second]' => '123456'
+            'registration_form[email]' => 'user@gmail.com',
+            'registration_form[plainPassword][first]' => 'password',
+            'registration_form[plainPassword][second]' => 'password'
         ]);        
 
         $client->submit($form);
@@ -106,7 +106,7 @@ class RegisterTest extends AbstractTest
 
         $crawler = $client->request('GET', '/register');
         $form = $crawler->selectButton('Продолжить')->form([
-            'registration_form[email]' => 'end@example.com',
+            'registration_form[email]' => 'end4@example.com',
             'registration_form[plainPassword][first]' => '123456',
             'registration_form[plainPassword][second]' => '123456'
         ]);        

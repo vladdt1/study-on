@@ -36,16 +36,16 @@
 										руб.</p>
 									<form action="{{ path('app_course_pay', {'code': course.code}) }}" method="post" class="purchase-form">
 										<input type="hidden" name="token" value="{{ userToken }}">
-										<button type="submit" class="btn btn-success">Купить курс</button>
+										<button type="submit" class="btn btn-success buy-course">Купить курс</button>
 									</form>
-                                    <a href="{{ path('app_course_show', {'code': course.code}) }}" class="btn btn-primary mt-2">Посмотреть содержимое курса</a>
+                                    <a href="{{ path('app_course_show', {'code': course.code}) }}" class="btn btn-primary watch mt-2">Посмотреть содержимое курса</a>
 								{% elseif course.type == 2 %}
 									<p>Цена аренды на месяц:
 										{{ course.price }}
 										руб.</p>
 									<form action="{{ path('app_course_rent', {'code': course.code}) }}" method="post" class="rent-form">
 										<input type="hidden" name="token" value="{{ userToken }}">
-										<button type="submit" class="btn btn-info">Арендовать</button>
+										<button type="submit" class="btn btn-info rent-course">Арендовать</button>
 									</form>
                                     <a href="{{ path('app_course_show', {'code': course.code}) }}" class="btn btn-primary mt-2">Посмотреть содержимое курса</a>
 								{% else %}
