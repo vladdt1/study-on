@@ -17,6 +17,7 @@ security:
             custom_authenticator: App\Security\BillingAuthenticator
             logout:
                 path: app_logout
+                target: app_course_index
                 # where to redirect after logout
                 # target: app_any_route
             remember_me:
