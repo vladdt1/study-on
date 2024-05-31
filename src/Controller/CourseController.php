@@ -56,7 +56,7 @@ class CourseController extends AbstractController
             }
         } catch (\Exception $e) {
             $this->addFlash('error', 'Ошибка при покупке курса: ' . $e->getMessage());
-        }
+        }   
         return $this->redirectToRoute('app_course_show', ['code' => $code]);
     }
 

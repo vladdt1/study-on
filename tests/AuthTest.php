@@ -47,6 +47,6 @@ class AuthTest extends WebTestCase
 
         $client->submit($form);
 
-        $this->assertResponseStatusCodeSame(500);
+        $this->assertResponseStatusCodeSame(401);
     }
 }
